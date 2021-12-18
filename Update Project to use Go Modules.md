@@ -1,3 +1,5 @@
+In the rare case that this is useful to anyone...
+
 # Updating your project to use Golang modules:
 
 ### 1. Make sure GO's environment variable GO111MODULE is off 
@@ -6,7 +8,7 @@
 
 > Windows CMD: set GO111MODULE=off
 
-### 2. Make sure GOPATH is set (Google this if not).
+### 2. Make sure GOPATH is set (Should know about this, so Google if unsure).
 
 ### 3. Navigate to your src directory (where main.go exists), and execute:
 
