@@ -41,6 +41,11 @@ will be done by the server instead of the browswer -- so no problem encountered.
 But if you're hydrating your content, or having the client make API requests, then the browser will be involved
 and you'll be faced with the CORS problem.
 
+An important thing we must keep in mind is this: Cookies sent by the server will be IGNORED
+if the API is on an external domain as defined above (cross-origin to be technically correct).
+Therefore, if you're using cookies to keep the user signed in, then your code will not work.
+To overcome this, we must use CORS to tell the browser that it's ok to do (setting Access-Control-Allow-Credentials to true).
+
 The below code satisfies the cross-origin problem. The most notable line is:
 
 ```
@@ -48,8 +53,11 @@ The below code satisfies the cross-origin problem. The most notable line is:
 ```
 
 This tells the web browser: `Let the client connect to my server ONLY IF they're visiting from www.yourDomain.com.` 
-(Use * instead of www.YourDomain.com for allowing ALL hosts; useful when you're unsure what domain to use using development)
-Keep in mind that this is telling the web browser what to do, so people can bypass it if they feel inclined (e.g.,
+(Use "*" instead of "www.YourDomain.com" for allowing ALL hosts; useful when you're unsure what domain to use using development,
+but be careful: If you enabled Access-Control Allow Credentials so that you can use cookies, then setting "*"
+will DISABLE the parameter, meaning cookies will NO LONGER work. This is by design, and there's nothing we can do about it.)
+
+Keep in mind that CORS is simply telling the web browser what to do, so people can bypass it if they feel inclined (e.g.,
 by installing a browser plugin that modifies the Access-Control-Allow-Origin header). 
 And that's okay. It's not about if someone bypasses it; it's about ensuring your website is reasonably accessible.
 
@@ -66,11 +74,12 @@ func main() {
 
   router.HandleFunc("/hello-world", HelloWorld).Methods("GET", "OPTIONS")
   
-  originRequest := handlers.AllowedOrigins([]string{"*"}) // Specify * to allow all hosts; may be useful in devleopment
   headerRequest := handlers.AllowedHeaders([]string{"Content-Type", "X-Requested-With"})
-  methodRequest := handlers.AllowedMethods([]string{"GET", "PUT", "DELETE", "PATCH", "POST", "HEAD", "OPTIONS"})
+  methodRequest := handlers.AllowedMethods([]string{"GET", "PUT", "DELETE", "PATCH", "POST", "HEAD", "OPTIONS"})  
+  originRequest := handlers.AllowedOrigins([]string{"http://www.YourDomain.com"}) // Specify * to allow all hosts; may be useful in devleopment, BUT Allow Credentials will NO LONGER work if you do, therefore you cannot use both "*" AND have the ability to use cookies.
+  credentialREquest := handlers.AllowCredentials()
 
-  log.Fatal( http.ListenAndServe(":8000", handlers.CORS(originRequest, headerRequest, methodRequest)(router)) )
+  log.Fatal( http.ListenAndServe(":8000", handlers.CORS(headerRequest, methodRequest, originRequest, credentialRequest)(router)) ) //Remove undesired options here, e.g., remove credentialRequest as a parameter if you don't want it
 }
 
 func HelloWorld(w http.ResponseWriter, r *http.Request) {
